@@ -43,6 +43,7 @@ class Message:
             else:
                 raise RuntimeError("Peer closed.")
 
+    # FIFTH STEP WRITING; Sends byte message and handles errors. Writing done.
     def _write(self):
         if self._send_buffer:
             print(f"Sending {self._send_buffer!r} to {self.addr}")
@@ -66,13 +67,14 @@ class Message:
         tiow.close()
         return obj
 
+    # FOURTH STEP WRITING; Creates the entire message in byte form to be sent. 
     def _create_message(
-        self, *, content_bytes, content_type, content_encoding
-    ):
+            self, *, content_bytes, content_type, content_encoding
+            ):
         jsonheader = {
             "byteorder": sys.byteorder,
             "content-type": content_type,
-            "content-encoding": content_encoding,
+            "content-encoding": content_encoding, #TODO remove this since we know it will be text
             "content-length": len(content_bytes),
         }
         jsonheader_bytes = self._json_encode(jsonheader, "utf-8")
@@ -89,6 +91,7 @@ class Message:
         content = self.response
         print(f"Got response: {content!r}")
 
+    # FIRST STEP ALL; determines if the event is read or write.
     def process_events(self, mask):
         if mask & selectors.EVENT_READ:
             self.read()
@@ -109,6 +112,7 @@ class Message:
             if self.response is None:
                 self.process_response()
 
+    # SECOND STEP WRITING; creates a request, which creates a message. then writes to server. and sets to read after message is sent.
     def write(self):
         if not self._request_queued:
             self.queue_request()
@@ -139,17 +143,17 @@ class Message:
             self.sock = None
 
     #TODO study this and fix it to cater to our needs
+    # THIRD STEP WRITING; if request is not made, we create a request (dictionary containing descriptive data of the message)
     def queue_request(self):
         content = self.request["content"]
-        # we removed the request['type'] key since we know it will always be text/json
         content_encoding = self.request["encoding"]
-        # we will remove checking the type of content since we know it will always be text/json
         req = {
             "content_bytes": self._json_encode(content, content_encoding),
             "content_type": "text/json",
-            "content_encoding": content_encoding,
+            "content_encoding": content_encoding
         } # TODO maybe get rid of the content_type section area of this dict
         message = self._create_message(**req)
+        # After creating the message in byes, adds message to send buffer (queue of messages)
         self._send_buffer += message
         self._request_queued = True
 

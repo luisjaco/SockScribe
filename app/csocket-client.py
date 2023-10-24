@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# so first comes first, we should define how the client will send data
-# then worry about how the server will read such data
+# made it so it works, just need to clean it up at a later point
+# TODO clean up.
 
 import sys
 import socket
@@ -11,65 +11,45 @@ import csocket_libclient as libclient
 
 sel = selectors.DefaultSelector()
 
+# Data that will be sent when program starts. Later should be through system argument.
+data = "apples!!! -luis jaco."
 
-def create_request(action, value):
-    if action == "search":
-        return dict(
-            type="text/json",
-            encoding="utf-8",
-            content=dict(action=action, value=value),
-        )
-    else:
-        # this call is sending binary data, i dont really know how it works
-        return dict(
-            type="binary/custom-client-binary-type",
-            encoding="binary",
-            content=bytes(action + value, encoding="utf-8"),
-        )
-
-
-def create_csv_request(data):
-    # data should already be in string format
+def create_request(data):
     return dict(
         encoding="utf-8",
-        content=data
+        content=dict(value=data)
     )
 
-# TODO change message class to work with this
 def start_connection(host, port, request):
     addr = (host, port)
     print(f"Starting connection to {addr}")
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setblocking(False)
-    # actually makes connection
     sock.connect_ex(addr)
-    # sets whether the event is read or write
+    # Creates events.
     events = selectors.EVENT_READ | selectors.EVENT_WRITE
-    # all we do is intialize the Message class, nothing more
     message = libclient.Message(sel, sock, addr, request)
-    # sends data (message) to socket
-    sel.register(sock, events, data=message) 
+    sel.register(sock, events, data=message) # Registers a file object, adds it to events.
 
 
-if len(sys.argv) != 5:
-    print(f"Usage: {sys.argv[0]} <host> <port> <action> <value>")
+if len(sys.argv) != 3:
+    print(f"Usage: {sys.argv[0]} <host> <port>")
     sys.exit(1)
 
 # initializing a connection
 host, port = sys.argv[1], int(sys.argv[2])
-action, value = sys.argv[3], sys.argv[4]
-#request = create_request(action, value) # creates request using given arguments
-request = create_csv_request("um, um, um, um")
-start_connection(host, port, request) # starts connection and sends the desired request
+# data = sys.argv[3]
+request = create_request(data) # Add request into the events of the socket.
+start_connection(host, port, request) 
 
-# this is for receiving responses from the server and decoding them
+# Handles all events. First event to go is the writing event.
 try:
     while True:
         events = sel.select(timeout=1)
         for key, mask in events:
             message = key.data
             try:
-                message.process_events(mask)
+                message.process_events(mask) # gets called when either writing or reading data in the events dict
             except Exception:
                 print(
                     f"Main: Error: Exception for {message.addr}:\n"
