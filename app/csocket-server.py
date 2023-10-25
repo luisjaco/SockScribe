@@ -5,20 +5,13 @@ import socket
 import selectors
 import traceback
 
-import libserver
+import csocket_libserver as libserver
 
 sel = selectors.DefaultSelector()
 
-# setup (.socket, .bind, .listen) -> 
-# listening
-# get connection (events = sel.select)
-# receive data (message = key.data)
-# try to process when data is full (accept_wrapper) ->
-# process message in Message ->
-# send back message to declare success (sel.register)
 
 def accept_wrapper(sock):
-    conn, addr = sock.accept()  # blocks execution and waits for incoming connection
+    conn, addr = sock.accept()  # Blocks execution and waits for incoming connection
     print(f"Accepted connection from {addr}")
     conn.setblocking(False)
     message = libserver.Message(sel, conn, addr)
@@ -34,7 +27,7 @@ host, port = sys.argv[1], int(sys.argv[2])
 lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Socket details
 # Avoid bind() exception: OSError: [Errno 48] Address already in use
 lsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) #output socket
-lsock.bind((host, port)) # associates socket with host and port number
+lsock.bind((host, port)) 
 lsock.listen() # has the socket listen for connections
 print(f"Listening on {(host, port)}") 
 lsock.setblocking(False)

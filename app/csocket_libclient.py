@@ -30,6 +30,7 @@ class Message:
             raise ValueError(f"Invalid events mask mode {mode!r}.")
         self.selector.modify(self.sock, events, data=self)
 
+    # STEP THREE READING; checks if byte data is ready to recieve, else something is wrong: raise error.
     def _read(self):
         try:
             # Should be ready to read
@@ -69,12 +70,11 @@ class Message:
 
     # FOURTH STEP WRITING; Creates the entire message in byte form to be sent. 
     def _create_message(
-            self, *, content_bytes, content_type, content_encoding
+            self, *, content_bytes, content_encoding
             ):
         jsonheader = {
             "byteorder": sys.byteorder,
-            "content-type": content_type,
-            "content-encoding": content_encoding, #TODO remove this since we know it will be text
+            "content-encoding": content_encoding,
             "content-length": len(content_bytes),
         }
         jsonheader_bytes = self._json_encode(jsonheader, "utf-8")
@@ -82,6 +82,7 @@ class Message:
         message = message_hdr + jsonheader_bytes + content_bytes
         return message
 
+    # STEP FIVE READING; after completing the message, we print the contents.
     def _process_response_json_content(self):
         content = self.response
         result = content.get("result")
@@ -98,9 +99,11 @@ class Message:
         if mask & selectors.EVENT_WRITE:
             self.write()
 
+    # SECOND STEP READING; processes byte data as its sent from server.
     def read(self):
         self._read()
 
+        # Processes headers as the client is sent the bytes.
         if self._jsonheader_len is None:
             self.process_protoheader()
 
@@ -142,16 +145,14 @@ class Message:
             # Delete reference to socket object for garbage collection
             self.sock = None
 
-    #TODO study this and fix it to cater to our needs
     # THIRD STEP WRITING; if request is not made, we create a request (dictionary containing descriptive data of the message)
     def queue_request(self):
         content = self.request["content"]
         content_encoding = self.request["encoding"]
         req = {
             "content_bytes": self._json_encode(content, content_encoding),
-            "content_type": "text/json",
             "content_encoding": content_encoding
-        } # TODO maybe get rid of the content_type section area of this dict
+        } 
         message = self._create_message(**req)
         # After creating the message in byes, adds message to send buffer (queue of messages)
         self._send_buffer += message
@@ -175,30 +176,23 @@ class Message:
             for reqhdr in (
                 "byteorder",
                 "content-length",
-                "content-type",
                 "content-encoding",
             ):
                 if reqhdr not in self.jsonheader:
                     raise ValueError(f"Missing required header '{reqhdr}'.")
 
+    # STEP THREE READING; once entire message is sent, we decode and read the content.
     def process_response(self):
         content_len = self.jsonheader["content-length"]
         if not len(self._recv_buffer) >= content_len:
             return
         data = self._recv_buffer[:content_len]
         self._recv_buffer = self._recv_buffer[content_len:]
-        if self.jsonheader["content-type"] == "text/json":
-            encoding = self.jsonheader["content-encoding"]
-            self.response = self._json_decode(data, encoding)
-            print(f"Received response {self.response!r} from {self.addr}")
-            self._process_response_json_content()
-        else:
-            # Binary or unknown content-type
-            self.response = data
-            print(
-                f"Received {self.jsonheader['content-type']} "
-                f"response from {self.addr}"
-            )
-            self._process_response_binary_content()
+        
+        encoding = self.jsonheader["content-encoding"]
+        self.response = self._json_decode(data, encoding)
+        print(f"Received response {self.response!r} from {self.addr}")
+        self._process_response_json_content()
+        
         # Close when response has been processed
         self.close()

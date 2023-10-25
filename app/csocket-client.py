@@ -40,27 +40,29 @@ if len(sys.argv) != 3:
 host, port = sys.argv[1], int(sys.argv[2])
 # data = sys.argv[3]
 request = create_request(data) # Add request into the events of the socket.
-start_connection(host, port, request) 
+start_connection(host, port, request)
 
 # Handles all events. First event to go is the writing event.
-try:
-    while True:
-        events = sel.select(timeout=1)
-        for key, mask in events:
-            message = key.data
-            try:
-                message.process_events(mask) # gets called when either writing or reading data in the events dict
-            except Exception:
-                print(
-                    f"Main: Error: Exception for {message.addr}:\n"
-                    f"{traceback.format_exc()}"
-                )
-                message.close()
-        # Check for a socket being monitored to continue.
-        if not sel.get_map():
-            break
-except KeyboardInterrupt:
-    print("Caught keyboard interrupt, exiting")
-finally:
-    sel.close()
+def send_and_recieve():
+    try:
+        while True:
+            events = sel.select(timeout=1)
+            for key, mask in events:
+                message = key.data
+                try:
+                    message.process_events(mask) # gets called when either writing or reading data in the events dict
+                except Exception:
+                    print(
+                        f"Main: Error: Exception for {message.addr}:\n"
+                        f"{traceback.format_exc()}"
+                    )
+                    message.close()
+            # Check for a socket being monitored to continue.
+            if not sel.get_map():
+                break
+    except KeyboardInterrupt:
+        print("Caught keyboard interrupt, exiting")
+    finally:
+        sel.close()
 
+send_and_recieve()
