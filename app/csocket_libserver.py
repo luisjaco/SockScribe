@@ -3,15 +3,9 @@ import selectors
 import json
 import io
 import struct
+from csv_editor import TextEditor
 
 # TODO currently good, got rid of json_encoding field
-
-request_search = {
-    "morpheus": "Follow the white rabbit. \U0001f430",
-    "ring": "In the caves beneath the Misty Mountains. \U0001f48d",
-    "\U0001f436": "\U0001f43e Playing ball! \U0001f3d0",
-}
-
 
 class Message:
     def __init__(self, selector, sock, addr):
@@ -118,9 +112,14 @@ class Message:
 
     # STEP ONE BOTH; finds if the event is for reading or for writing.
     # Basically directly after reading, we write.
-    def process_events(self, mask):
+    def process_events(self, mask, path):
         if mask & selectors.EVENT_READ:
             self.read()
+
+            # After full message is read, we will append to the csv file.
+            textEditor = TextEditor(path)
+            textEditor.append_to_file(self.request['value'])
+
         if mask & selectors.EVENT_WRITE:
             self.write()
 
@@ -200,7 +199,6 @@ class Message:
         encoding = self.jsonheader["content-encoding"]
         self.request = self._json_decode(data, encoding)
         print(f"Received data {self.request!r} from {self.addr}")
-        
         # Set selector to listen for write events, we're done reading.
         self._set_selector_events_mask("w")
 
