@@ -76,5 +76,5 @@ class Client:
         self.sel.register(sock, events, data=message) # Registers a file object, adds it to events.
 
 testing = Client('127.0.0.1', 65432)
-testing.send_data("first data 091029")
-testing.send_data("second data 023523")
+testing.send_data("one,two,three")
+testing.send_data("four,five,six")

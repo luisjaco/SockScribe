@@ -3,7 +3,7 @@ import selectors
 import json
 import io
 import struct
-from csv_editor import TextEditor
+
 
 # TODO currently good, got rid of json_encoding field
 
@@ -112,13 +112,12 @@ class Message:
 
     # STEP ONE BOTH; finds if the event is for reading or for writing.
     # Basically directly after reading, we write.
-    def process_events(self, mask, path):
+    def process_events(self, mask, fileEditor):
         if mask & selectors.EVENT_READ:
             self.read()
 
             # After full message is read, we will append to the csv file.
-            textEditor = TextEditor(path)
-            textEditor.append_to_file(self.request['value'])
+            fileEditor.append_to_file(self.request['value'])
 
         if mask & selectors.EVENT_WRITE:
             self.write()

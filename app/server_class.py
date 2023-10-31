@@ -4,10 +4,12 @@ import selectors
 import traceback
 import os
 import csocket_libserver as libserver
+from csv_editor import CSVEditor
 # TODO remove testing
-# TODO make a good way to handle the data and then enter it to a csv, preferably through this class and nothing else
+# TODO make this class more robust: get rid of all the random stuff we dont need and start gearing up for actually being done, cause its done.
+# TODO learn documentation
 class Server:
-    def __init__(self, host: str, port: int, path: str):
+    def __init__(self, host: str, port: int, path: str, delimiter: str=','):
         """
         Server to recieve data from a client.\n
         Parameters:\n
@@ -16,12 +18,7 @@ class Server:
             path-- Path of the csv file this server will append.\n
         Returns: a Server instance.
         """
-        if os.path.exists(path):
-            self.path = path
-        else:
-            print("Error: path not found, exiting")
-            sys.exit(1)
-
+        self.fileEditor = CSVEditor(path, delimiter)
         self.host = host
         self.port = port
         self.open = False
@@ -29,6 +26,7 @@ class Server:
     def start(self):
         if self.open:
             print("Server already open! Close first server before attempting new server.")
+            sys.exit(1)
         else:
             self.open = True
             sel = selectors.DefaultSelector()
@@ -65,7 +63,7 @@ class Server:
                         message = key.data
                         try:
                             # then we try to process the data
-                            message.process_events(mask, self.path)
+                            message.process_events(mask, self.fileEditor)
                         except Exception:
                             print(
                                 f"Main: Error: Exception for {message.addr}:\n"
@@ -78,5 +76,5 @@ class Server:
             sel.close()
             self.open = False
 
-testing = Server('127.0.0.1', 65432, 'testing.txt')
+testing = Server('127.0.0.1', 65432, 'csvtesting.csv', ',')
 testing.start()
