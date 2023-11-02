@@ -3,8 +3,7 @@ import sys
 import socket
 import selectors
 import traceback
-
-import csocket_libclient as libclient 
+import libclient 
 
 # TODO remove testing portion at bottom
 class Client:
@@ -18,6 +17,7 @@ class Client:
         """
         self.host = host
         self.port = port
+        print(f"Set connection to {host}, {port}")
 
 
     def send_data(self, data):
@@ -66,7 +66,7 @@ class Client:
     def _start_connection(self, host, port, request):
         self.sel = selectors.DefaultSelector()
         addr = (host, port)
-        print(f"Starting connection to {addr}")
+        #TODO remove print(f"Starting connection to {addr}")
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setblocking(False)
         sock.connect_ex(addr)
@@ -76,5 +76,7 @@ class Client:
         self.sel.register(sock, events, data=message) # Registers a file object, adds it to events.
 
 testing = Client('127.0.0.1', 65432)
-testing.send_data("one,two,three")
-testing.send_data("four,five,six")
+
+while True:
+    print("Give something to say: ", end="")
+    testing.send_data(input())
