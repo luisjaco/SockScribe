@@ -5,7 +5,6 @@ import selectors
 import traceback
 import libclient 
 
-# TODO remove testing portion at bottom
 class Client:
     def __init__(self, host: str, port: int):
         """
@@ -66,7 +65,6 @@ class Client:
     def _start_connection(self, host, port, request):
         self.sel = selectors.DefaultSelector()
         addr = (host, port)
-        #TODO remove print(f"Starting connection to {addr}")
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setblocking(False)
         sock.connect_ex(addr)
@@ -76,7 +74,8 @@ class Client:
         self.sel.register(sock, events, data=message) # Registers a file object, adds it to events.
 
 testing = Client('127.0.0.1', 65432)
-
+# testing = Client('64.187.251.230', 50623)
 while True:
     print("Give something to say: ", end="")
     testing.send_data(input())
+    

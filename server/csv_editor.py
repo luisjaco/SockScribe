@@ -9,8 +9,7 @@ class CSVEditor:
         Parameters: \n
             path-- File path of the csv file, will be checked if valid.\n
             delimiter-- Delimiter of data within csv.\n
-        Returns: a CSVEditor instance.
-
+        Returns: CSVEditor instance.
         """
         if os.path.exists(path):
             self.path = path
@@ -21,12 +20,12 @@ class CSVEditor:
 
 
     def append_to_file(self, data: str):
-        try:
+        if os.path.exists(self.path):
             with open(self.path, 'a') as csvfile:
-                split_data = data.split(self.delimiter)
-                csvwriter = csv.writer(csvfile, delimiter=self.delimiter)
+                split_data = data.split(sep=self.delimiter)
+                csvwriter = csv.writer(csvfile)
                 csvwriter.writerow(split_data)
-        except FileNotFoundError:
-            print("Error: Path not found when writing data.")
+        else:
+            print("Error: Path not found when attempting to append data, exiting.")
             raise FileNotFoundError
         
