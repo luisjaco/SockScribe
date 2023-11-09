@@ -1,9 +1,9 @@
+# An alternate version of libclient which will show you a more descriptive representation of the data being sent and received.
 import sys
 import selectors
 import json
 import io
 import struct
-
 
 class Message:
     def __init__(self, selector, sock, addr, request):
@@ -30,7 +30,6 @@ class Message:
             raise ValueError(f"Invalid events mask mode {mode!r}.")
         self.selector.modify(self.sock, events, data=self)
 
-    # STEP THREE READING; checks if byte data is ready to recieve, else something is wrong: raise error.
     def _read(self):
         try:
             # Should be ready to read
@@ -44,11 +43,9 @@ class Message:
             else:
                 raise RuntimeError("Peer closed.")
 
-    # FIFTH STEP WRITING; Sends byte message and handles errors. Writing done.
     def _write(self):
         if self._send_buffer:
-            #TODO remove print(f"Sending {self._send_buffer!r} to {self.addr}")
-            print(f"{self.request['content']['value']}")
+            print(f"Sending {self._send_buffer!r} to {self.addr}")
             try:
                 # Should be ready to write
                 sent = self.sock.send(self._send_buffer)
@@ -69,7 +66,6 @@ class Message:
         tiow.close()
         return obj
 
-    # FOURTH STEP WRITING; Creates the entire message in byte form to be sent. 
     def _create_message(
             self, *, content_bytes, content_encoding
             ):
@@ -83,12 +79,10 @@ class Message:
         message = message_hdr + jsonheader_bytes + content_bytes
         return message
 
-    # STEP FIVE READING; after completing the message, we print the contents.
     def _process_response_json_content(self):
         content = self.response
         result = content.get("result")
-        #TODO maybe implement a check to see if the right data was sent over
-        #TODO removeprint(f"Got result: {result}")
+        print(f"Got result: {result}")
         if result == self.request['content']['value']:
             print("    ∟success.")
         else:
@@ -98,18 +92,15 @@ class Message:
         content = self.response
         print(f"Got response: {content!r}")
 
-    # FIRST STEP ALL; determines if the event is read or write.
     def process_events(self, mask):
         if mask & selectors.EVENT_READ:
             self.read()
         if mask & selectors.EVENT_WRITE:
             self.write()
 
-    # SECOND STEP READING; processes byte data as its sent from server.
     def read(self):
         self._read()
 
-        # Processes headers as the client is sent the bytes.
         if self._jsonheader_len is None:
             self.process_protoheader()
 
@@ -120,49 +111,6 @@ class Message:
         if self.jsonheader:
             if self.response is None:
                 self.process_response()
-
-    # SECOND STEP WRITING; creates a request, which creates a message. then writes to server. and sets to read after message is sent.
-    def write(self):
-        if not self._request_queued:
-            self.queue_request()
-
-        self._write()
-
-        if self._request_queued:
-            if not self._send_buffer:
-                # Set selector to listen for read events, we're done writing.
-                self._set_selector_events_mask("r")
-
-    def close(self):
-        # TODO print(f"Closing connection to {self.addr}")
-        try:
-            self.selector.unregister(self.sock)
-        except Exception as e:
-            print(
-                f"Error: selector.unregister() exception for "
-                f"{self.addr}: {e!r}"
-            )
-
-        try:
-            self.sock.close()
-        except OSError as e:
-            print(f"Error: socket.close() exception for {self.addr}: {e!r}")
-        finally:
-            # Delete reference to socket object for garbage collection
-            self.sock = None
-
-    # THIRD STEP WRITING; if request is not made, we create a request (dictionary containing descriptive data of the message)
-    def queue_request(self):
-        content = self.request["content"]
-        content_encoding = self.request["encoding"]
-        req = {
-            "content_bytes": self._json_encode(content, content_encoding),
-            "content_encoding": content_encoding
-        } 
-        message = self._create_message(**req)
-        # After creating the message in byes, adds message to send buffer (queue of messages)
-        self._send_buffer += message
-        self._request_queued = True
 
     def process_protoheader(self):
         hdrlen = 2
@@ -187,7 +135,6 @@ class Message:
                 if reqhdr not in self.jsonheader:
                     raise ValueError(f"Missing required header '{reqhdr}'.")
 
-    # STEP THREE READING; once entire message is sent, we decode and read the content.
     def process_response(self):
         content_len = self.jsonheader["content-length"]
         if not len(self._recv_buffer) >= content_len:
@@ -197,7 +144,48 @@ class Message:
         
         encoding = self.jsonheader["content-encoding"]
         self.response = self._json_decode(data, encoding)
-        # TODO remove print(f"Received response {self.response!r} from {self.addr}")
+        print(f"Received response {self.response!r} from {self.addr}")
         self._process_response_json_content()        
         # Close when response has been processed
         self.close()
+    
+    def write(self):
+        if not self._request_queued:
+            self.queue_request()
+
+        self._write()
+
+        if self._request_queued:
+            if not self._send_buffer:
+                # Set selector to listen for read events, we're done writing.
+                self._set_selector_events_mask("r")
+
+    def queue_request(self):
+        content = self.request["content"]
+        content_encoding = self.request["encoding"]
+        req = {
+            "content_bytes": self._json_encode(content, content_encoding),
+            "content_encoding": content_encoding
+        } 
+        message = self._create_message(**req)
+        # After creating the message in byes, adds message to send buffer (queue of messages)
+        self._send_buffer += message
+        self._request_queued = True
+
+    def close(self):
+        print(f"Closing connection to {self.addr}")
+        try:
+            self.selector.unregister(self.sock)
+        except Exception as e:
+            print(
+                f"Error: selector.unregister() exception for "
+                f"{self.addr}: {e!r}"
+            )
+
+        try:
+            self.sock.close()
+        except OSError as e:
+            print(f"Error: socket.close() exception for {self.addr}: {e!r}")
+        finally:
+            # Delete reference to socket object for garbage collection
+            self.sock = None

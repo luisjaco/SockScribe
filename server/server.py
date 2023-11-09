@@ -1,12 +1,9 @@
 import socket
 import selectors
 import traceback
-import libserver
-import csv_editor
 import sys
-# TODO remove testing
-# TODO make this class more robust: get rid of all the random stuff we dont need and start gearing up for actually being done, cause its done.
-# TODO learn documentation
+import csv_editor
+import libserver
 
 class Server:
     def __init__(self, host: str, port: int, path: str, delimiter: str=','):
@@ -22,22 +19,6 @@ class Server:
         self.file_editor = csv_editor.CSVEditor(path, delimiter)
         self.host = host
         self.port = port
-
-    def start(self):
-        """
-        Starts the server
-        """
-        sel = selectors.DefaultSelector()
-        self._start_connection(sel)
-        self._event_loop(sel)
-
-    def _accept_wrapper(self, sock, sel):
-        conn, addr = sock.accept()  # Blocks execution and waits for incoming connection
-        # Confirm connection is accepted
-        print(f"{addr[0]}, {addr[1]}")
-        conn.setblocking(False)
-        message = libserver.Message(sel, conn, addr)
-        sel.register(conn, selectors.EVENT_READ, data=message)
 
     def _start_connection(self, sel):
         lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Socket details
@@ -61,8 +42,7 @@ class Server:
                         try:
                             message.process_events(mask, self.file_editor)
                         except FileNotFoundError:
-                            sel.close()
-                            sys.exit(1)
+                            self.stop(sel, True)
                         except Exception:
                             print(
                                 f"Main: Error: Exception for {message.addr}:\n"
@@ -70,10 +50,30 @@ class Server:
                             )
                             message.close()
         except KeyboardInterrupt:
-            print("Caught keyboard interrupt, exiting")
+            print("\nCaught keyboard interrupt, exiting")
         finally:
-            sel.close()
+            self.stop(sel)
 
-testing = Server('127.0.0.1', 65432, 'csv_example.csv', ',')
-# testing = Server('64.187.251.230', 50663, 'csvtesting.csv', '-')
+    def _accept_wrapper(self, sock, sel):
+        conn, addr = sock.accept()  # Blocks execution and waits for incoming connection
+        # Confirm connection is accepted
+        print(f"{addr[0]}, {addr[1]}")
+        conn.setblocking(False)
+        message = libserver.Message(sel, conn, addr)
+        sel.register(conn, selectors.EVENT_READ, data=message)
+
+    def start(self):
+        """
+        Starts the server.
+        """
+        sel = selectors.DefaultSelector()
+        self._start_connection(sel)
+        self._event_loop(sel)
+
+    def stop(self, sel, exit=False):
+        sel.close()
+        if exit:
+            sys.exit(1)
+
+testing = Server('127.0.0.1', 65432, 'sample.csv')
 testing.start()

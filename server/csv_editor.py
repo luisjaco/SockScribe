@@ -23,9 +23,8 @@ class CSVEditor:
         if os.path.exists(self.path):
             with open(self.path, 'a') as csvfile:
                 split_data = data.split(sep=self.delimiter)
-                csvwriter = csv.writer(csvfile)
+                csvwriter = csv.writer(csvfile, delimiter=self.delimiter)
                 csvwriter.writerow(split_data)
         else:
             print("Error: Path not found when attempting to append data, exiting.")
             raise FileNotFoundError
-        

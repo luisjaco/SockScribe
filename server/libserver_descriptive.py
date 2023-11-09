@@ -1,9 +1,10 @@
+# An alternate version of libserver which will show you a more descriptive representation of the data being sent and received.
 import sys
 import selectors
 import json
 import io
 import struct
-# TODO find out if this works from pc to pc, and make it better overall. understand what code does.
+
 class Message:
     def __init__(self, selector, sock, addr):
         self.selector = selector
@@ -41,10 +42,9 @@ class Message:
             else:
                 raise RuntimeError("Peer closed.")
 
-    # STEP SIX WRITING; if _send_buffer (message byte data) is ready (true), we send the data back
     def _write(self):
         if self._send_buffer:
-            # TODO remove print(f"Sending {self._send_buffer!r} to {self.addr}")
+            print(f"Sending {self._send_buffer!r} to {self.addr}")
             try:
                 # Should be ready to write
                 sent = self.sock.send(self._send_buffer)
@@ -67,22 +67,7 @@ class Message:
         obj = json.load(tiow)
         tiow.close()
         return obj
-
-    # STEP FIVE WRITING; creates the message in it's entirety, then converts to byte data.
-    def _create_message(
-        self, *, content_bytes, content_type, content_encoding
-    ):
-        jsonheader = {
-            "byteorder": sys.byteorder,
-            "content-encoding": content_encoding,
-            "content-length": len(content_bytes),
-        }
-        jsonheader_bytes = self._json_encode(jsonheader, "utf-8")
-        message_hdr = struct.pack(">H", len(jsonheader_bytes))
-        message = message_hdr + jsonheader_bytes + content_bytes
-        return message
-
-    # STEP FOUR WRITING; we make the response to the given data
+    
     def _create_response_json_content(self):
         query = self.request.get("value")
         if query is None:
@@ -97,19 +82,22 @@ class Message:
         }
         return response
 
-    def _create_response_binary_content(self):
-        response = {
-            "content_bytes": b"First 10 bytes of request: "
-            + self.request[:10],
-            "content_type": "binary/custom-server-binary-type",
-            "content_encoding": "binary",
+    def _create_message(
+        self, *, content_bytes, content_type, content_encoding
+    ):
+        jsonheader = {
+            "byteorder": sys.byteorder,
+            "content-encoding": content_encoding,
+            "content-length": len(content_bytes),
         }
-        return response
+        jsonheader_bytes = self._json_encode(jsonheader, "utf-8")
+        message_hdr = struct.pack(">H", len(jsonheader_bytes))
+        message = message_hdr + jsonheader_bytes + content_bytes
+        return message
 
     def process_events(self, mask, file_editor):
         if mask & selectors.EVENT_READ:
             self.read()
-            # After full message is read, we will append to the csv file.
             file_editor.append_to_file(self.request['value'])
 
         if mask & selectors.EVENT_WRITE:
@@ -161,12 +149,10 @@ class Message:
         
         encoding = self.jsonheader["content-encoding"]
         self.request = self._json_decode(data, encoding)
-        #TODO remove print(f"Received data {self.request!r} from {self.addr}")
-        print(f"    ∟{self.request['value']}")
+        print(f"Received data {self.request!r} from {self.addr}")
         # Set selector to listen for write events, we're done reading.
         self._set_selector_events_mask("w")
 
-    # STEP TWO WRITING; we create a response if needed, then continue.
     def write(self):
         if self.request:
             if not self.response_created:
@@ -182,7 +168,7 @@ class Message:
         self._send_buffer += message
 
     def close(self):
-        # TODO remove print(f"Closing connection to {self.addr}")
+        print(f"Closing connection to {self.addr}")
         try:
             self.selector.unregister(self.sock)
         except Exception as e:

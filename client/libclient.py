@@ -4,7 +4,6 @@ import json
 import io
 import struct
 
-
 class Message:
     def __init__(self, selector, sock, addr, request):
         self.selector = selector
@@ -45,7 +44,6 @@ class Message:
 
     def _write(self):
         if self._send_buffer:
-            #TODO remove print(f"Sending {self._send_buffer!r} to {self.addr}")
             print(f"{self.request['content']['value']}")
             try:
                 # Should be ready to write

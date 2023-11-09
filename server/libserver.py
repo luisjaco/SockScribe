@@ -93,7 +93,6 @@ class Message:
     def process_events(self, mask, file_editor):
         if mask & selectors.EVENT_READ:
             self.read()
-            # After full message is read, we will append to the csv file.
             file_editor.append_to_file(self.request['value'])
 
         if mask & selectors.EVENT_WRITE:
