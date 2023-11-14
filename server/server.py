@@ -3,46 +3,52 @@ import selectors
 import traceback
 import sys
 import csv_editor
-import libserver
+from libserver import Message
 
 class Server:
-    def __init__(self, host: str, port: int, path: str, delimiter: str=','):
-        """
-        Server to recieve data from a client.\n
-        Parameters:\n
-            host-- Host address of the server.\n
-            port-- Port number of the server.\n
-            path-- Path of the csv file this server will append.\n
-            delimiter-- delimiter expected to receive from client.\n
-        Returns: a Server instance.
-        """
-        self.file_editor = csv_editor.CSVEditor(path, delimiter)
-        self.host = host
-        self.port = port
+    """
+    The Server class handles creating a server and receiving messages.
 
-    def _start_connection(self, sel):
-        lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Socket details
+    You can start a socket server by initializing a Server object, then using the
+    start method.
+    """
+    def __init__(self, host: str, port: int, path: str, delimiter: str=","):
+        """
+        Instantiate a Server class, takes in server information along with file information.
+
+        Args:
+            host: host address for creating a Socket server.
+            port: port number for creating a Socket server.
+            path: file path for the csv file used in receiving data.
+            delimiter: delimiter for the csv data. default is ",".
+        """
+        self._file_editor = csv_editor.CSVEditor(path, delimiter)
+        self._host = host
+        self._port = port
+
+    def _start_connection(self):
+        lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)   # Socket details
         # Avoid bind() exception: OSError: [Errno 48] Address already in use
         lsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) #Socket output details
-        lsock.bind((self.host, self.port))
+        lsock.bind((self._host, self._port))
         lsock.listen()
-        print(f"Listening on {self.host}, {self.port}")
+        print(f"Listening on {self._host}, {self._port}")
         lsock.setblocking(False)
-        sel.register(lsock, selectors.EVENT_READ, data=None)
+        self._sel.register(lsock, selectors.EVENT_READ, data=None)
 
-    def _event_loop(self, sel):
+    def _event_loop(self):
         try:
             while True:
-                events = sel.select(timeout=None)
+                events = self._sel.select(timeout=None)
                 for key, mask in events:
                     if key.data is None:
-                        self._accept_wrapper(key.fileobj, sel)
+                        self._accept_wrapper(key.fileobj)
                     else:
                         message = key.data
                         try:
-                            message.process_events(mask, self.file_editor)
+                            message.process_events(mask, self._file_editor)
                         except FileNotFoundError:
-                            self.stop(sel, True)
+                            self.stop(True)
                         except Exception:
                             print(
                                 f"Main: Error: Exception for {message.addr}:\n"
@@ -52,28 +58,38 @@ class Server:
         except KeyboardInterrupt:
             print("\nCaught keyboard interrupt, exiting")
         finally:
-            self.stop(sel)
+            self.stop()
 
-    def _accept_wrapper(self, sock, sel):
+    def _accept_wrapper(self, sock):
         conn, addr = sock.accept()  # Blocks execution and waits for incoming connection
         # Confirm connection is accepted
         print(f"{addr[0]}, {addr[1]}")
         conn.setblocking(False)
-        message = libserver.Message(sel, conn, addr)
-        sel.register(conn, selectors.EVENT_READ, data=message)
+        message = Message(self._sel, conn, addr)
+        self._sel.register(conn, selectors.EVENT_READ, data=message)
 
-    def start(self):
+    def stop(self, exit=False):
         """
-        Starts the server.
-        """
-        sel = selectors.DefaultSelector()
-        self._start_connection(sel)
-        self._event_loop(sel)
-
-    def stop(self, sel, exit=False):
-        sel.close()
+        Stop the server.
+        
+        Args:
+            exit: if true will exit the console. default is False."""
+        self._sel.close()
         if exit:
             sys.exit(1)
+
+    def start(self) -> None:
+        """
+        Start the server.
+
+        This method will create a socket server then begin to listen for messages,
+        presumably from another device using the Client class. The server will wait
+        for any incoming messages. Messages will be handled and then appended to the 
+        csv file. The server will close once a keyboard interuption is caught.
+        """
+        self._sel = selectors.DefaultSelector()
+        self._start_connection()
+        self._event_loop()
 
 testing = Server('127.0.0.1', 65432, 'sample.csv')
 testing.start()
