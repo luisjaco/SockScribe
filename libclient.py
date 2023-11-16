@@ -1,3 +1,9 @@
+"""
+This module is for handling a clients sent and recieved messages.
+
+This module contains the Message class. The Message class handles sent and 
+recieved data from a client. 
+"""
 import sys
 import selectors
 import json
@@ -5,6 +11,13 @@ import io
 import struct
 
 class Message:
+    """
+    The Message class is for sending and recieving data on the client side.
+    
+    In typical use, the Message class will properly format the data being sent
+    by a client, then send to server. It will then read responses from the
+    server and verify that the message was sent properly.
+    """
     def __init__(self, selector, sock, addr, request):
         self.selector = selector
         self.sock = sock

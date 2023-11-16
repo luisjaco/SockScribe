@@ -1,3 +1,9 @@
+"""
+This module is for handling a servers sent and recieved messages.
+
+This module contains the Message class. The Message class handles sent and 
+recieved data from a server. 
+"""
 import sys
 import selectors
 import json
@@ -5,6 +11,13 @@ import io
 import struct
 
 class Message:
+    """
+    The Message class is for sending and recieving data on the server side.
+    
+    In typical use, the Message class will properly read messages from a client then call a 
+    CSVEditor instance to append the message to a csv file. The Message class
+    will then properly format and then send a server response.
+    """
     def __init__(self, selector, sock, addr):
         self.selector = selector
         self.sock = sock
@@ -17,7 +30,9 @@ class Message:
         self.response_created = False
 
     def _set_selector_events_mask(self, mode):
-        """Set selector to listen for events: mode is 'r', 'w', or 'rw'."""
+        """
+        Set selector to listen for events: mode is 'r', 'w', or 'rw'.
+        """
         if mode == "r":
             events = selectors.EVENT_READ
         elif mode == "w":

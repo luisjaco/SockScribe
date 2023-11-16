@@ -1,4 +1,9 @@
+"""
+This module is for sending data to a listening socket with the use of socket.
 
+This module contains the Client class, which can be used to send data to a set
+listening socket.
+"""
 import sys
 import socket
 import selectors
@@ -79,8 +84,3 @@ class Client:
         else:
             print("Given data is not type string, exiting.")
             sys.exit(1)
-
-testing = Client('127.0.0.1', 65432)
-while True:
-    print("Give something to say: ", end="")
-    testing.send_data(input())
