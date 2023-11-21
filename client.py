@@ -71,7 +71,7 @@ class Client:
         """
         Sends data to the set connection.
 
-        Formats str data, creates socket between client and server, creates a Message, 
+        Formats str data, creates a Message, creates socket between client and server, 
         then sends data to server.
 
         Args:

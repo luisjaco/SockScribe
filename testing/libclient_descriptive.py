@@ -1,4 +1,13 @@
-# An alternate version of libclient which will show you a more descriptive representation of the data being sent and received.
+"""
+This module is a modified version of libclient intended for testing.
+
+This module contains the Message class. The Message class handles sent and 
+recieved data from a client. This testing version will print out all sent
+and recieved content. The protoheader, jsonheader, and response content will be 
+printed to the console with each message.
+
+To use this testing module, import the Message class from this module in client.py.
+"""
 import sys
 import selectors
 import json
@@ -6,6 +15,13 @@ import io
 import struct
 
 class Message:
+    """
+    The Message class is for sending and recieving data on the client side.
+    
+    In typical use, the Message class will properly format the data being sent
+    by a client, then send to server. It will then read the servers response and 
+    verify that the message was sent properly.
+    """
     def __init__(self, selector, sock, addr, request):
         self.selector = selector
         self.sock = sock
@@ -87,10 +103,6 @@ class Message:
             print("    ∟success.")
         else:
             print("    ∟error, response from server did not match data sent.")
-
-    def _process_response_binary_content(self):
-        content = self.response
-        print(f"Got response: {content!r}")
 
     def process_events(self, mask):
         if mask & selectors.EVENT_READ:

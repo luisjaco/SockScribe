@@ -15,8 +15,8 @@ class Message:
     The Message class is for sending and recieving data on the client side.
     
     In typical use, the Message class will properly format the data being sent
-    by a client, then send to server. It will then read responses from the
-    server and verify that the message was sent properly.
+    by a client, then send to server. It will then read the servers response and 
+    verify that the message was sent properly.
     """
     def __init__(self, selector, sock, addr, request):
         self.selector = selector

@@ -1,4 +1,13 @@
-# An alternate version of libserver which will show you a more descriptive representation of the data being sent and received.
+"""
+This module is a modified version of libserver intended for testing.
+
+This module contains the Message class. The Message class handles sent and 
+recieved data from a server. This testing version will print out all sent
+and recieved content. The protoheader, jsonheader, and response content will be 
+printed to the console with each message.
+
+To use this testing module, import the Message class from this module in server.py.
+"""
 import sys
 import selectors
 import json
@@ -6,6 +15,13 @@ import io
 import struct
 
 class Message:
+    """
+    The Message class is for sending and recieving data on the server side.
+    
+    In typical use, the Message class will properly read messages from a client then 
+    call a CSVEditor instance to append the message to a csv file. The Message class
+    will then properly format and then send a server response.
+    """
     def __init__(self, selector, sock, addr):
         self.selector = selector
         self.sock = sock
