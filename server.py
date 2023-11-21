@@ -3,7 +3,7 @@ This module is for creating a listening socket with the use of socket.
 
 This module contains the Server class, which can be used to create a listening
 socket (server) which will listen for messages from clients. Recieved messages 
-will then be read and appended into a set csv file.
+will then be read and appended into a set CSV file.
 """
 import socket
 import selectors
@@ -26,8 +26,8 @@ class Server:
         Args:
             host: host address for creating a Socket server.
             port: port number for creating a Socket server.
-            path: file path for the csv file used in receiving data.
-            delimiter: delimiter for the csv data. default is ",".
+            path: file path for the CSV file used in receiving data.
+            delimiter: delimiter for the CSV data. default is ",".
         """
         self._file_editor = csv_editor.CSVEditor(path, delimiter)
         self._host = host
@@ -92,7 +92,7 @@ class Server:
         This method will create a listening socket (server) then begin to listen for messages,
         presumably from another device using the Client class. The server will wait
         for any incoming messages. Messages will be handled and then appended to the 
-        set csv file. The server will close once a keyboard interuption is caught.
+        set CSV file. The server will close once a keyboard interuption is caught.
         """
         self._sel = selectors.DefaultSelector()
         self._start_connection()

@@ -1,7 +1,7 @@
 """
-This module is for appending data to a csv file.
+This module is for appending data to a CSV file.
 
-This module contains the CSVEditor class, which appends str data to a set csv
+This module contains the CSVEditor class, which appends str data to a set CSV
 file.
 """
 import sys
@@ -10,7 +10,7 @@ import csv
 
 class CSVEditor:
     """
-    The CSVEditor class handles appending csv data to a set csv file.
+    The CSVEditor class handles appending CSV data to a set CSV file.
     """
     def __init__(self, path: str, delimiter: str= ","):
         """
@@ -19,8 +19,8 @@ class CSVEditor:
         The path must exist before being created. If path does not exist,
         CSVEditor will cause the program to exit.
         Args:
-            path: file path to desired csv file.
-            delimiter: delimiter to be used when writing csv data. default is ",".
+            path: file path to desired CSV file.
+            delimiter: delimiter to be used when writing CSV data. default is ",".
         """
         if os.path.exists(path):
             self._path = path
@@ -32,10 +32,10 @@ class CSVEditor:
 
     def append_to_file(self, data: str) -> None:
         """
-        Appends csv data to the set csv file.
+        Appends CSV data to the set CSV file.
         
         Args:
-            data: properly formatted csv data.
+            data: properly formatted CSV data.
         """
         if os.path.exists(self._path):
             with open(self._path, 'a') as csvfile:

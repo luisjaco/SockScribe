@@ -15,7 +15,7 @@ class Message:
     The Message class is for sending and recieving data on the server side.
     
     In typical use, the Message class will properly read messages from a client then 
-    call a CSVEditor instance to append the message to a csv file. The Message class
+    call a CSVEditor instance to append the message to a CSV file. The Message class
     will then properly format and then send a server response.
     """
     def __init__(self, selector, sock, addr):
