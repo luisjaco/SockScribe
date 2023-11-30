@@ -1,7 +1,7 @@
 # SockScribe
-A lightweight Python library for sending and recieving real-time data across a network, using **sockets**.
+A lightweight Python library for sending and receiving real-time data across a network, using **sockets**.
 
-`SockScribe` is a Python library which contains classes to be used in your programs to send and recieve data between a server and other client devices. Recieved data will be stored to a CSV file locally on the server device.
+`SockScribe` is a Python library which contains classes to be used in your programs to send and receive data between a server and other client devices. Received data will be stored to a CSV file locally on the server device.
 
 > [!NOTE]  
 > This library is intended to be used with Raspberry Pi programs; however, it can be used on other devices without an issue.
